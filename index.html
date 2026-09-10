@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Dart Master</title>
+<meta name="description" content="Aim, lock, and throw. Beat the leaderboard." />
+<meta name="theme-color" content="#0c0e13" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ SCREEN 1: START ============ -->
+  <section class="screen start-screen active" id="screen-start" aria-live="polite">
+    <div class="brand-mark">Orientation Arcade</div>
+    <h1 class="title">🎯 DART<br><span class="accent">MASTER</span></h1>
+    <p class="subtitle">Hit the bullseye. Beat the leaderboard.</p>
+
+    <div class="start-board-wrap" aria-hidden="true">
+      <div class="board-svg-wrap" style="box-shadow:none;">
+        <svg viewBox="0 0 100 100" width="100%" height="100%" id="startBoardSvg"></svg>
+      </div>
+    </div>
+
+    <div class="hint-card">
+      <strong>How to play:</strong> Lock your horizontal aim, then lock your vertical aim. Where they cross is where your dart lands.
+    </div>
+
+    <button class="btn btn-primary" id="btnStart" type="button">START GAME</button>
+  </section>
+
+  <!-- ============ SCREEN 2: HORIZONTAL AIM ============ -->
+  <section class="screen aim-screen" id="screen-horizontal" aria-live="polite">
+    <div class="aim-header">
+      <div class="step-label">STEP 1 / 2</div>
+      <h2 class="step-title">LOCK HORIZONTAL AIM</h2>
+    </div>
+
+    <div class="board-stage">
+      <div class="board-svg-wrap">
+        <svg viewBox="0 0 100 100" width="100%" height="100%" id="hBoardSvg"></svg>
+      </div>
+      <div class="aim-overlay">
+        <img class="dart aim-dart" id="hDart" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg%3E%3Cpolygon points='20,2 24,16 20,13 16,16' fill='%23ffb703'/%3E%3Crect x='19' y='13' width='2' height='18' fill='%23e8e2d3'/%3E%3Cpolygon points='14,30 20,26 26,30 26,36 20,32 14,36' fill='%23ff4b4b'/%3E%3Ccircle cx='20' cy='31' r='1.6' fill='%230c0e13'/%3E%3C/g%3E%3C/svg%3E" alt="" />
+      </div>
+    </div>
+
+    <div class="coord-readout" id="hReadout">X: <span class="val">—</span></div>
+
+    <div class="aim-actions">
+      <button class="btn btn-gold" id="btnLockH" type="button">LOCK HORIZONTAL</button>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 3: VERTICAL AIM ============ -->
+  <section class="screen aim-screen" id="screen-vertical" aria-live="polite">
+    <div class="aim-header">
+      <div class="step-label">STEP 2 / 2</div>
+      <h2 class="step-title">LOCK VERTICAL AIM</h2>
+    </div>
+
+    <div class="board-stage">
+      <div class="board-svg-wrap">
+        <svg viewBox="0 0 100 100" width="100%" height="100%" id="vBoardSvg"></svg>
+      </div>
+      <div class="aim-overlay">
+        <img class="dart aim-dart" id="vDart" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg%3E%3Cpolygon points='20,2 24,16 20,13 16,16' fill='%23ffb703'/%3E%3Crect x='19' y='13' width='2' height='18' fill='%23e8e2d3'/%3E%3Cpolygon points='14,30 20,26 26,30 26,36 20,32 14,36' fill='%23ff4b4b'/%3E%3Ccircle cx='20' cy='31' r='1.6' fill='%230c0e13'/%3E%3C/g%3E%3C/svg%3E" alt="" />
+      </div>
+    </div>
+
+    <div class="coord-readout" id="vReadout">Y: <span class="val">—</span></div>
+
+    <div class="aim-actions">
+      <button class="btn btn-primary" id="btnThrow" type="button">THROW DART</button>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 4: THROW / IMPACT ============ -->
+  <section class="screen throw-screen" id="screen-throw" aria-live="polite">
+    <div class="aim-header">
+      <h2 class="step-title" id="throwLabel">RELEASING…</h2>
+    </div>
+    <div class="board-stage">
+      <div class="board-svg-wrap">
+        <svg viewBox="0 0 100 100" width="100%" height="100%" id="throwBoardSvg"></svg>
+      </div>
+      <div class="aim-overlay" id="throwOverlay">
+        <img class="dart" id="dartEl" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg%3E%3Cpolygon points='20,2 24,16 20,13 16,16' fill='%23ffb703'/%3E%3Crect x='19' y='13' width='2' height='18' fill='%23e8e2d3'/%3E%3Cpolygon points='14,30 20,26 26,30 26,36 20,32 14,36' fill='%23ff4b4b'/%3E%3Ccircle cx='20' cy='31' r='1.6' fill='%230c0e13'/%3E%3C/g%3E%3C/svg%3E" alt="" />
+        <div class="impact-ring" id="impactRing"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 5: RESULT ============ -->
+  <section class="screen result-screen" id="screen-result" aria-live="polite">
+    <div class="result-score" id="resultScoreVal">0</div>
+    <div class="result-label" id="resultLabel">GREAT SHOT!</div>
+
+    <form class="name-form" id="nameForm" novalidate>
+      <label for="nameInput">ENTER YOUR NAME</label>
+      <input class="name-input" id="nameInput" type="text" maxlength="20" placeholder="Your Name" autocomplete="off" autocapitalize="words" />
+      <div class="field-msg" id="nameMsg"></div>
+      <button class="btn btn-gold" id="btnSubmitScore" type="submit">SUBMIT SCORE</button>
+    </form>
+
+    <div class="mini-board" id="miniBoard">
+      <div class="mini-board-title">🏆 Leaderboard</div>
+      <div id="miniBoardRows"></div>
+      <div class="your-rank" id="yourRank"></div>
+    </div>
+
+    <div class="result-actions">
+      <button class="btn btn-secondary" id="btnPlayAgain" type="button">PLAY AGAIN</button>
+      <a class="btn btn-secondary" id="btnViewLeaderboard" href="/leaderboard" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">VIEW FULL LEADERBOARD</a>
+    </div>
+  </section>
+
+  <div class="footer-brand">Powered by <strong id="orgNameFooter"></strong></div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="game.js"></script>
+</body>
+</html>

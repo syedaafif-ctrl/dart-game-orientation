@@ -1,0 +1,9 @@
+{
+  "name": "dart-master-orientation",
+  "version": "1.0.0",
+  "description": "Dart Master - university orientation booth game with Supabase leaderboard",
+  "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4"
+  }
+}
