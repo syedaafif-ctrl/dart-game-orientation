@@ -1,79 +1,274 @@
-# Dart Master — Orientation Booth Game
+# 🎯 Dart Master — Orientation Booth Game
 
-A mobile-first two-stage aiming dart game with a live Supabase-backed leaderboard, built for Netlify (static frontend + Netlify Functions).
+A mobile-first, interactive dart game built for a university orientation booth, featuring a **two-stage aiming system, server-side score validation, Student ID-based play tracking, and a live global leaderboard**.
 
-## 1. Configure the organization name
+Designed to turn a simple booth activity into a competitive, real-time experience where students can play, improve their score, and compete for the top of the leaderboard.
 
-Edit this one line in **two** files:
+## ✨ Highlights
 
-- `game.js` → `const ORGANIZATION_NAME = "YOUR ORGANIZATION NAME";`
-- `leaderboard.js` → `const ORGANIZATION_NAME = "YOUR ORGANIZATION NAME";`
-
-## 2. Create the Supabase project
-
-1. Go to https://supabase.com → New project.
-2. Wait for it to finish provisioning.
-3. Open **SQL Editor** and run:
-
-```sql
-create table if not exists leaderboard (
-  id uuid primary key default gen_random_uuid(),
-  name text not null check (char_length(name) between 1 and 20),
-  score integer not null check (score >= 0 and score <= 100),
-  created_at timestamptz not null default now()
-);
-
-create index if not exists leaderboard_score_created_idx
-  on leaderboard (score desc, created_at asc);
-
--- Row Level Security: keep the table locked down. The Netlify Functions
--- use the service-role key, which bypasses RLS entirely, so the browser
--- never gets direct table access. Enabling RLS with no policies means
--- the anon/public key (if ever exposed) still can't read or write.
-alter table leaderboard enable row level security;
-```
-
-4. **Project URL**: Settings → API → "Project URL" → this is `SUPABASE_URL`.
-5. **Service role key**: Settings → API → "Project API keys" → `service_role` (secret) → this is `SUPABASE_SERVICE_ROLE_KEY`.
-   ⚠️ This key bypasses Row Level Security. Never put it in frontend code — it must only ever be set as a Netlify environment variable, used inside `netlify/functions/*.js`.
-
-## 3. Set Netlify environment variables
-
-Netlify dashboard → your site → **Site configuration → Environment variables** → Add variable:
-
-| Key | Value |
-|---|---|
-| `SUPABASE_URL` | from step 2.4 |
-| `SUPABASE_SERVICE_ROLE_KEY` | from step 2.5 |
-
-(If deploying via Netlify CLI, you can instead run `netlify env:set SUPABASE_URL ...`.)
-
-## 4. Deploy to Netlify
-
-**Option A — GitHub**
-1. Push this folder to a new GitHub repo.
-2. Netlify → **Add new site → Import an existing project** → pick the repo.
-3. Build command: leave empty. Publish directory: `.` (repo root).
-4. Add the environment variables from step 3, then deploy.
-
-**Option B — Direct deploy**
-1. Netlify → **Add new site → Deploy manually**.
-2. Drag the whole `dart-game` folder onto the upload area.
-3. Add the environment variables from step 3 in Site configuration, then trigger a redeploy so the functions pick them up.
-
-Either way, Netlify auto-detects `netlify.toml` and deploys the functions in `netlify/functions/`.
-
-## 5. Test it
-
-- Open the deployed URL on your phone → play through a full game → submit a score.
-- Open `/leaderboard` on a laptop/TV at the booth — it refreshes every 5 seconds automatically.
-
-## 6. Generate the QR code
-
-Use any free QR generator (e.g. https://www.qr-code-generator.com) pointed at your Netlify URL, e.g. `https://your-site.netlify.app`. Print it for the booth.
+* 🎯 **Two-stage aiming system** — players lock their horizontal and vertical aim before throwing.
+* 🏆 **Live global leaderboard** — scores are stored in a Supabase PostgreSQL database and displayed in real time.
+* 🪪 **Student ID-based tracking** — each student is uniquely associated with their attempts.
+* 🔥 **5-play limit** — each student gets a maximum of 5 attempts.
+* ⭐ **Best-score system** — only the student's highest score is retained on the leaderboard.
+* 🛡️ **Server-side score validation** — scores are independently calculated by the backend instead of trusting the client.
+* 📱 **Mobile-first design** — optimized for students playing through their phones via QR code.
+* 🖥️ **Dedicated leaderboard display** — the leaderboard can be opened separately on a laptop/TV at the booth.
+* ⚡ **Serverless architecture** — deployed using Netlify Functions with no traditional backend server required.
 
 ---
 
-### How anti-cheat works
+## 🏗️ Architecture
 
-The browser never sends a raw score. It sends the **normalized locked coordinates** (`x`, `y`, each `0.0–1.0`) from the player's two aim locks. `netlify/functions/submit-score.js` independently recalculates the score from those coordinates using the exact same scoring bands as the client — so a modified client can send different coordinates, but it cannot claim a score its coordinates don't earn. The server also rejects out-of-range coordinates, non-integer/out-of-range scores, empty or malformed names, and applies a short best-effort per-IP cooldown between submissions.
+```text
+                 ┌──────────────────┐
+                 │   Student Phone  │
+                 │                  │
+                 │  Dart Game UI    │
+                 └────────┬─────────┘
+                          │
+                    Normalized
+                   (x, y) coordinates
+                          │
+                          ▼
+              ┌───────────────────────┐
+              │    Netlify Function   │
+              │                       │
+              │  • Validate input     │
+              │  • Calculate score    │
+              │  • Track plays        │
+              │  • Update best score  │
+              │  • Calculate rank     │
+              └───────────┬───────────┘
+                          │
+                          ▼
+                ┌──────────────────┐
+                │     Supabase     │
+                │    PostgreSQL    │
+                │                  │
+                │   Leaderboard    │
+                └────────┬─────────┘
+                         │
+                         ▼
+                ┌──────────────────┐
+                │ Booth TV/Laptop  │
+                │                  │
+                │ Global Leaderboard│
+                └──────────────────┘
+```
+
+## 🛡️ Backend & Anti-Cheat System
+
+One of the key parts of the project is that the **client does not have authority over the final score**.
+
+Instead of sending a raw score, the game sends the normalized coordinates of the player's two aim locks:
+
+```text
+x = 0.0 → 1.0
+y = 0.0 → 1.0
+```
+
+The Netlify backend independently calculates the score from these coordinates using the game's scoring rules.
+
+This means a modified browser client cannot simply submit:
+
+```text
+score = 100
+```
+
+and expect the server to accept it.
+
+The backend also handles:
+
+* Input validation
+* Coordinate range validation
+* Student ID validation
+* Maximum 5-play enforcement
+* Best-score comparison and updates
+* Server-side ranking
+* Duplicate Student ID handling
+* Rate limiting between submissions
+* Sanitization of user-provided names and IDs
+
+The Supabase database is protected with **Row Level Security**, while the secret service-role key is kept exclusively inside Netlify environment variables and never exposed to the browser.
+
+---
+
+## 🏆 Leaderboard Logic
+
+Each student has a single leaderboard entry.
+
+For every attempt:
+
+```text
+Student plays
+      ↓
+Attempt #1
+      ↓
+Score calculated by server
+      ↓
+Best score saved
+      ↓
+Attempt #2
+      ↓
+Compare with previous best
+      ↓
+Keep the higher score
+      ↓
+...
+      ↓
+Attempt #5
+      ↓
+Further attempts blocked
+```
+
+For example:
+
+| Attempt | Score | Leaderboard Score |
+| ------- | ----: | ----------------: |
+| 1       |    40 |                40 |
+| 2       |    60 |                60 |
+| 3       |    20 |                60 |
+| 4       |    80 |                80 |
+| 5       |    60 |                80 |
+
+This keeps the leaderboard competitive without creating multiple entries for the same student.
+
+---
+
+## 🎮 Gameplay
+
+1. Scan the QR code.
+2. Enter your name and Student ID.
+3. Lock your horizontal aim.
+4. Lock your vertical aim.
+5. The dart lands at the selected position.
+6. Your score is calculated.
+7. Your attempt is recorded.
+8. Your best score is shown on the global leaderboard.
+9. You can play up to 5 times.
+
+---
+
+## 🧰 Tech Stack
+
+**Frontend**
+
+* HTML5
+* CSS3
+* Vanilla JavaScript
+
+**Backend**
+
+* Netlify Functions
+* Node.js
+
+**Database**
+
+* Supabase
+* PostgreSQL
+* Row Level Security
+
+**Deployment**
+
+* Netlify
+* GitHub
+
+---
+
+## 📁 Project Structure
+
+```text
+dart-game/
+│
+├── index.html
+├── leaderboard.html
+├── style.css
+├── game.js
+├── leaderboard.js
+├── netlify.toml
+├── package.json
+├── README.md
+│
+└── netlify/
+    └── functions/
+        ├── submit-score.js
+        └── leaderboard.js
+```
+
+### Key files
+
+**`game.js`**
+Handles the game flow, aiming mechanics, user interaction, and communication with the backend.
+
+**`submit-score.js`**
+The main server-side scoring and leaderboard function. Validates the submission, calculates the authoritative score, enforces the 5-play limit, and updates the student's best score.
+
+**`leaderboard.js`**
+Retrieves and displays the current top players.
+
+**`leaderboard.html`**
+Dedicated leaderboard interface designed for a booth laptop/TV.
+
+---
+
+## 🚀 Deployment
+
+The project is designed for a simple serverless deployment:
+
+```text
+GitHub
+   ↓
+Netlify
+   ↓
+Static Frontend + Netlify Functions
+   ↓
+Supabase PostgreSQL
+```
+
+No traditional server or separate backend hosting is required.
+
+---
+
+## 🎓 Built For
+
+**University Orientation Booth**
+
+The project was designed specifically for an orientation environment where many students can access the game simultaneously through a QR code while a separate screen displays the live leaderboard.
+
+The combination of **gamification + persistent player tracking + server-side validation + live rankings** turns the booth into a small competitive experience rather than just a static activity.
+
+---
+
+## 📌 Project Goals
+
+This project demonstrates practical implementation of:
+
+* Full-stack web development
+* Serverless backend architecture
+* Database integration
+* REST-style API communication
+* Server-side validation
+* Basic anti-cheat design
+* User/session tracking
+* Leaderboard ranking systems
+* Responsive UI design
+* Deployment and environment management
+
+---
+
+## 🔗 Live Demo
+
+**Play the game:**
+https://dart-game-orientation.netlify.app/
+
+**Leaderboard:**
+https://dart-game-orientation.netlify.app/leaderboard
+
+---
+
+## 👨‍💻 Project
+
+**Dart Master — Orientation Booth Game**
+
+Built as an interactive university orientation experience with a focus on **gamification, backend reliability, and real-time competition**.
