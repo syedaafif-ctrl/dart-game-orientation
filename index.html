@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<title>Dart Master</title>
-<meta name="description" content="Aim, lock, and throw. Beat the leaderboard." />
+<title>NSU ACM Dart Challenge</title>
+<meta name="description" content="NSU ACM Student Chapter orientation booth game — aim, lock, and throw for the leaderboard." />
 <meta name="theme-color" content="#0c0e13" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,9 +16,12 @@
 
   <!-- ============ SCREEN 1: START ============ -->
   <section class="screen start-screen active" id="screen-start" aria-live="polite">
-    <div class="brand-mark">Orientation Arcade</div>
-    <h1 class="title">🎯 DART<br><span class="accent">MASTER</span></h1>
-    <p class="subtitle">Hit the bullseye. Beat the leaderboard.</p>
+    <div class="acm-badge" aria-hidden="true">
+      <img class="acm-logo" src="acm-logo.webp" alt="" />
+    </div>
+    <div class="brand-mark">NSU ACM Student Chapter</div>
+    <h1 class="title">DART<br><span class="accent">CHALLENGE</span></h1>
+    <p class="subtitle">Lock your aim. Hit the bullseye. Climb the leaderboard.</p>
 
     <div class="start-board-wrap" aria-hidden="true">
       <div class="board-svg-wrap" style="box-shadow:none;">
@@ -99,6 +102,7 @@
   <section class="screen result-screen" id="screen-result" aria-live="polite">
     <div class="result-score" id="resultScoreVal">0</div>
     <div class="result-label" id="resultLabel">GREAT SHOT!</div>
+    <div class="attempt-counter" id="attemptCounter" hidden></div>
 
     <form class="name-form" id="nameForm" novalidate>
   <label for="nameInput">ENTER YOUR NAME</label>
