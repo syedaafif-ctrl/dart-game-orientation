@@ -48,14 +48,10 @@ function sanitizeStudentId(raw) {
 
   let studentId = raw.trim().toUpperCase();
 
-  // Remove HTML/control characters
   studentId = studentId.replace(/<[^>]*>/g, "");
   studentId = studentId.replace(/[\u0000-\u001F\u007F]/g, "");
-
-  // Remove spaces
   studentId = studentId.replace(/\s+/g, "");
 
-  // Maximum length
   if (studentId.length > 30) {
     studentId = studentId.slice(0, 30);
   }
@@ -218,26 +214,24 @@ exports.handler = async (event) => {
 
   try {
     /* =====================================================
-       CHECK HOW MANY TIMES THIS STUDENT HAS ALREADY PLAYED
+       FIND EXISTING STUDENT
        ===================================================== */
 
-    const { count: playCount, error: countError } = await supabase
+    const { data: existing, error: findError } = await supabase
       .from("leaderboard")
-      .select("id", {
-        count: "exact",
-        head: true,
-      })
-      .eq("student_id", studentId);
+      .select("id, name, score, play_number, created_at")
+      .eq("student_id", studentId)
+      .maybeSingle();
 
-    if (countError) {
-      throw countError;
+    if (findError) {
+      throw findError;
     }
 
-    const currentPlays = playCount || 0;
-
     /* =====================================================
-       MAXIMUM 5 PLAYS
+       DETERMINE PLAY NUMBER
        ===================================================== */
+
+    const currentPlays = existing?.play_number || 0;
 
     if (currentPlays >= 5) {
       return {
@@ -255,22 +249,56 @@ exports.handler = async (event) => {
     const playNumber = currentPlays + 1;
 
     /* =====================================================
-       INSERT SCORE
+       EXISTING STUDENT
+       UPDATE SAME ROW
        ===================================================== */
 
-    const { data: inserted, error: insertError } = await supabase
-      .from("leaderboard")
-      .insert({
-        name,
-        student_id: studentId,
-        play_number: playNumber,
-        score,
-      })
-      .select("id, name, score, created_at")
-      .single();
+    let saved;
 
-    if (insertError) {
-      throw insertError;
+    if (existing) {
+      // Keep the original name.
+      // Only update the score if the new score is better.
+      const bestScore = Math.max(existing.score, score);
+
+      const { data: updated, error: updateError } = await supabase
+        .from("leaderboard")
+        .update({
+          score: bestScore,
+          play_number: playNumber,
+        })
+        .eq("id", existing.id)
+        .select("id, name, score, created_at")
+        .single();
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      saved = updated;
+    }
+
+    /* =====================================================
+       NEW STUDENT
+       INSERT ONE ROW
+       ===================================================== */
+
+    else {
+      const { data: inserted, error: insertError } = await supabase
+        .from("leaderboard")
+        .insert({
+          name,
+          student_id: studentId,
+          play_number: playNumber,
+          score,
+        })
+        .select("id, name, score, created_at")
+        .single();
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      saved = inserted;
     }
 
     /* =====================================================
@@ -284,7 +312,7 @@ exports.handler = async (event) => {
         head: true,
       })
       .or(
-        `score.gt.${score},and(score.eq.${score},created_at.lt.${inserted.created_at})`
+        `score.gt.${saved.score},and(score.eq.${saved.score},created_at.lt.${saved.created_at})`
       );
 
     const rank = rankError ? null : (count || 0) + 1;
@@ -310,6 +338,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         success: true,
         score,
+        bestScore: saved.score,
         rank,
         playNumber,
         playsUsed: playNumber,
