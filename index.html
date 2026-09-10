@@ -101,11 +101,38 @@
     <div class="result-label" id="resultLabel">GREAT SHOT!</div>
 
     <form class="name-form" id="nameForm" novalidate>
-      <label for="nameInput">ENTER YOUR NAME</label>
-      <input class="name-input" id="nameInput" type="text" maxlength="20" placeholder="Your Name" autocomplete="off" autocapitalize="words" />
-      <div class="field-msg" id="nameMsg"></div>
-      <button class="btn btn-gold" id="btnSubmitScore" type="submit">SUBMIT SCORE</button>
-    </form>
+  <label for="nameInput">ENTER YOUR NAME</label>
+  <input
+    class="name-input"
+    id="nameInput"
+    type="text"
+    maxlength="20"
+    placeholder="Your Name"
+    autocomplete="off"
+    autocapitalize="words"
+  />
+
+  <label for="studentIdInput">ENTER YOUR STUDENT ID</label>
+  <input
+    class="name-input"
+    id="studentIdInput"
+    type="text"
+    maxlength="30"
+    placeholder="Your Student ID"
+    autocomplete="off"
+    autocapitalize="characters"
+  />
+
+  <div class="field-msg" id="nameMsg"></div>
+
+  <button
+    class="btn btn-gold"
+    id="btnSubmitScore"
+    type="submit"
+  >
+    SUBMIT SCORE
+  </button>
+</form>
 
     <div class="mini-board" id="miniBoard">
       <div class="mini-board-title">🏆 Leaderboard</div>
